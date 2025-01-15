@@ -1,0 +1,3 @@
+Beginning slack hours:	120
+Slack hours, lab 1:		0 
+remaining for labs 2-4:	120
