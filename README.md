@@ -13,6 +13,7 @@ Additional files provided:
 - `hello.asm`, `hello.bin` - "Hello world!" in 6500 assembler
 - `runsim.c` - runs your simulation
 - `disasm.c` - disassembler
+- `slack.txt` - see slack hours description below
 
 ### Deliverable
 

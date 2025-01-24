@@ -19,7 +19,6 @@ uint16_t PC = 0, SP = 0xFFFE;
 int Z, N;
 
 struct cpu _cpu = {
-    .memory = _memory,
     .R = {0},
     .PC = 0,
     .SP = 0xFFFE,

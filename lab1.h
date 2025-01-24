@@ -8,7 +8,7 @@
 #include <string.h>
 
 struct cpu {
-    uint8_t *memory;
+    uint8_t  memory[64*1024];
     uint16_t R[8];
     uint16_t PC;
     uint16_t SP;
