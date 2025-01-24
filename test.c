@@ -50,14 +50,12 @@ void test2(struct cpu *cpu)
     assert(cpu->memory[0x0009] == 0); /* not here */
 }
 
-char memory[64*1024];
 struct cpu cpu;
 
 int main(int argc, char **argv)
 {
-    cpu.memory = memory;
-    
     test1(&cpu);
+    test2(&cpu);
 
     printf("all tests PASS\n");
 }
