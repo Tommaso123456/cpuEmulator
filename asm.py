@@ -77,7 +77,7 @@ memory = [0] * 65536 #
 
 fixups = []
 
-alu = ['ADD', 'SUB', 'AND', 'OR', 'XOR', 'LSHIFT', 'RSHIFT', 'CMP', 'TEST']
+alu = ['ADD', 'SUB', 'AND', 'OR', 'XOR', 'LSHIFT', 'RSHIFT', 'SHIFTR', 'CMP', 'TEST']
 jmp = ['JMP', 'JMP_Z', 'JMP_NZ', 'JMP_LT', 'JMP_GT', 'JMP_LE','JMP_GE']
 reg = ['R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7']
 reg_sp = reg + ['SP']
@@ -143,7 +143,7 @@ def do_move(line):                        # move rs -> rd
     store_insn(0x4000 | (regnum(line[3]) << 4) | regnum(line[1]))
 
 alu_ops = {'ADD':0x0000, 'SUB':0x0200, 'AND':0x0400, 'OR':0x0600,
-               'XOR':0x0800, 'RSHIFT':0x0A00}
+               'XOR':0x0800, 'RSHIFT':0x0A00, 'SHIFTR':0x0A00}
 
 def do_alu(line):                         # op ra + rb -> rc
     store_insn(0x5000 | alu_ops[line[0]] | (regnum(line[5]) << 6) |
@@ -239,6 +239,7 @@ patterns = [
     [['OR', reg, '|', reg, '->', reg], do_alu],
     [['XOR', reg, '^', reg, '->', reg], do_alu],
     [['RSHIFT', reg, '>>', reg, '->', reg], do_alu],
+    [['SHIFTR', reg, '>>', reg, '->', reg], do_alu],
     [['CMP', reg, '-', reg], do_cmp],
     [['TEST', reg], do_test],
     [[jmp, '<#>'], do_jmp],
