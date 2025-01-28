@@ -22,15 +22,13 @@ void zerocpu(struct cpu *cpu)
 void testSET(struct cpu *cpu){
     //SET R1 = 0x1234
     zerocpu(cpu);
-    store2(cpu, 0x2C19, 0);
+    store2(cpu, 0x1001, 0);
+    store2(cpu, 0x1234, 2);
     int val = emulate(cpu);
     assert(val == 0);
-
-    printf("reg 1: ");
-    printf("%u\n", cpu->R[1]);
     
-    //assert(cpu->R[1] == 0x1234);
-    //assert(cpu->PC == 4);
+    assert(cpu->R[1] == 0x1234);
+    assert(cpu->PC == 4);
 
     printf("--PASSED SET TEST-- \n");
 }

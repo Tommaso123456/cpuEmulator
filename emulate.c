@@ -40,19 +40,12 @@ bool emulate(struct cpu *cpu)
         case 0x1: { // SET
             int reg = insn & 7; // Extract destination register
             uint16_t toStore = load2(cpu, cpu->PC + 2); //Load the value to store from PC + 2 and PC + 3
-
-
-            printf("Register: ");
-            printf("%i", reg);
-            printf(" data: ");
-            printf("%u\n", toStore);
             cpu->R[reg] = toStore; // Set register
             cpu->PC += 4; // Increment PC
             return false;
         }
 
         case 0x2: { // LOAD
-            
             
             int regA = insn & 7; // Destination register A
             
