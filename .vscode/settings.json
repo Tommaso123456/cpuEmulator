@@ -1,0 +1,10 @@
+{
+    "makefile.makefilePath": "",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/cs5600/maga.t-lab1",
+            "binaryPath": "/home/cs5600/maga.t-lab1/test",
+            "binaryArgs": []
+        }
+    ]
+}

@@ -8,12 +8,12 @@
 #include <string.h>
 
 struct cpu {
-    uint8_t  memory[64*1024];
-    uint16_t R[8];
-    uint16_t PC;
-    uint16_t SP;
-    bool Z;
-    bool N;
+    uint8_t  memory[64*1024]; //memory
+    uint16_t R[8]; //registers
+    uint16_t PC;  //program counter
+    uint16_t SP;  //stack pointer
+    bool Z;   //zero flag
+    bool N;   //negative flag
 };
 
 /* execute one instruction, return 0 to continue and 1 to halt
