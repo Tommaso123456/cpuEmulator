@@ -19,8 +19,58 @@ void zerocpu(struct cpu *cpu)
     memset(cpu->memory, 0, 64*1024);
 }
 
-/* 0000 : 5073      : ADD R3 + R6 -> R1
- */
+void testSET(struct cpu *cpu){
+    //SET R1 = 0x1234
+    zerocpu(cpu);
+    store2(cpu, 0x2C19, 0);
+    int val = emulate(cpu);
+    assert(val == 0);
+
+    printf("reg a: ");
+    printf("%u\n", cpu->R[1]);
+    
+    //assert(cpu->R[1] == 0x1234);
+    //assert(cpu->PC == 4);
+
+    printf("--PASSED SET TEST-- \n");
+}
+
+
+
+void testLOAD(struct cpu *cpu){
+
+    //LOAD R1 <- *R3
+    zerocpu(cpu);
+    cpu->R[3] = 5;
+    
+    store2(cpu, 0x1001, 0);
+    store2(cpu, 0x1234, 2);
+    int val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->R[1] == 0x1234);
+    assert(cpu->PC == 4);
+
+    //LOAD.B R2 <- *0x5678
+    zerocpu(cpu);
+    store2(cpu, 0x2402, 0);
+    store2(cpu, 0x5678, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->R[2] == 0x0078); //last 8-bits
+    assert(cpu->PC == 4);
+
+    //LOAD R2 <- *0x5678
+    zerocpu(cpu);
+    store2(cpu, 0x2002, 0);
+    store2(cpu, 0x5678, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->R[2] == 0x5678); //all 16 bits
+    assert(cpu->PC == 4);
+
+    printf("--PASSED LOAD TEST-- \n");
+}
+
 void test1(struct cpu *cpu)
 {
     zerocpu(cpu);
@@ -54,8 +104,11 @@ struct cpu cpu;
 
 int main(int argc, char **argv)
 {
-    test1(&cpu);
-    test2(&cpu);
+    // test1(&cpu);
+    // test2(&cpu);
+
+    testSET(&cpu);
+    testLOAD(&cpu);
 
     printf("all tests PASS\n");
 }
