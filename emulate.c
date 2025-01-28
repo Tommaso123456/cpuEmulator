@@ -88,10 +88,36 @@ bool emulate(struct cpu *cpu)
          case 0x3: {  //STORE
             int is_byte = (insn >> 10) & 0x1; // Byte or word flag
             int is_indirect = (insn >> 11) & 0x1; // Address type
-
+            //1 = indirect = from another register
+            //0 = direct = from address
+            int regA = insn & 7; 
             if (is_indirect){
-
+                int regB = (insn >> 3) & 7; 
+                if (is_byte){
+                    uint8_t data = cpu->R[regA];
+                    uint16_t addy = cpu->R[regB]; 
+                    store2(cpu, data, addy);
+                }
+                else{
+                    uint16_t data = cpu->R[regA];
+                    uint16_t addy = cpu->R[regB];
+                    store2(cpu, data, addy);
+                }
             }
+            else{
+                if (is_byte){
+                    uint8_t data = cpu->R[regA];
+                    uint16_t addy = load2(cpu, cpu->PC + 2);
+                    store2(cpu, data, addy);
+                }
+                else {
+                    uint16_t data = cpu->R[regA];
+                    uint16_t addy = load2(cpu, cpu->PC + 2);
+                    store2(cpu, data, addy);
+                }
+            }
+
+            cpu->PC += is_indirect ? 2 : 4; // Update PC
 
          }
 

@@ -69,6 +69,20 @@ void testLOAD(struct cpu *cpu){
     printf("--PASSED LOAD TEST-- \n");
 }
 
+void testSTORE(struct cpu *cpu){
+    zerocpu(cpu);
+    //Store R1 -> *0x5678
+    store2(cpu, 0x3801, 0);
+    store2(cpu, 0x5678, 2);
+    int val = emulate(cpu);
+
+    assert(val == 0);
+    assert(cpu->R[1] == 0x5678); //all 16 bits
+    assert(cpu->PC == 4);
+
+    printf("--PASSED STORE TEST-- \n");
+}
+
 void test1(struct cpu *cpu)
 {
     zerocpu(cpu);
@@ -102,11 +116,9 @@ struct cpu cpu;
 
 int main(int argc, char **argv)
 {
-    // test1(&cpu);
-    // test2(&cpu);
-
     testSET(&cpu);
     testLOAD(&cpu);
+    testSTORE(&cpu);
 
     printf("all tests PASS\n");
 }
