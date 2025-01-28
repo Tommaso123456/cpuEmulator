@@ -6,5 +6,8 @@
             "binaryPath": "/home/cs5600/maga.t-lab1/test",
             "binaryArgs": []
         }
-    ]
+    ],
+    "files.associations": {
+        "type_traits": "c"
+    }
 }

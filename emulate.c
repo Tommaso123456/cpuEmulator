@@ -57,23 +57,27 @@ bool emulate(struct cpu *cpu)
             if (is_indirect) {
                 if (is_byte){
                     int regB = (insn >> 3) & 7; // Register B
-                    uint8_t data = cpu->R[regB]; //Read data from register B
+                    uint16_t addy = cpu->R[regB]; //read address from register B
+                    uint8_t data =  load2(cpu, addy);  //Read data from register B
                     cpu->R[regA] = data;
                 }
                 else{
                     int regB = (insn >> 3) & 7; // Register B
-                    uint16_t data = cpu->R[regB]; //Read data from register B
+                    uint16_t addy = cpu->R[regB]; //read address from register B
+                    uint16_t data =  load2(cpu, addy);  //Read data from address from register B
                     cpu->R[regA] = data;
                 }
             }
             else{
                 if (is_byte){
-                    uint8_t data = load2(cpu, cpu->PC + 2); //Read data from specified addr
+                    uint16_t addy = load2(cpu, cpu->PC + 2);
+                    uint8_t data = load2(cpu, addy); //Read data from specified addr
                     cpu->R[regA] = data;
                         
                 }
                 else{
-                    uint16_t data = load2(cpu, cpu->PC + 2); //Read data from specified addr
+                    uint16_t addy = load2(cpu, cpu->PC + 2);
+                    uint16_t data = load2(cpu, addy); //Read data from specified addr
                     cpu->R[regA] = data;
                 }
             }
@@ -82,10 +86,7 @@ bool emulate(struct cpu *cpu)
             return false;
         }
 
-
-
-
-         case 0x3: {  //STORE
+        case 0x3: {  //STORE
             int is_byte = (insn >> 10) & 0x1; // Byte or word flag
             int is_indirect = (insn >> 11) & 0x1; // Address type
             //1 = indirect = from another register
@@ -118,16 +119,137 @@ bool emulate(struct cpu *cpu)
             }
 
             cpu->PC += is_indirect ? 2 : 4; // Update PC
+            return false;
+        }
 
-         }
+        case 0x4: { //MOVE
+            int regFrom = insn & 15; 
+            int regTo = (insn >> 4) & 15; 
+            if (regFrom == 8){
+                uint16_t data = cpu->SP;
+                if (regTo == 8){
+                    cpu->SP = data;
+                }
+                else{
+                    cpu->R[regTo] = data;
+                }
+            }
+            else if (regFrom < 8){
+                uint16_t data = cpu->R[regFrom];
+                if (regTo == 8){
+                    cpu->SP = data;
+                }
+                else{
+                    cpu->R[regTo] = data;
+                }
+            }
+            else{
+                exit(0);
+            }
 
-        //MOVE
+            cpu->PC += 2;
+            return false;
 
-        //ALU
+        }
 
-        //JMP_ABS
+        case 0x5: {  //ALU
+            int a = insn & 7;
+            int b = (insn >> 3) & 7; 
+            int c = (insn >> 6) & 7; 
+            uint16_t val = 0;
 
-        //JMP_IND
+
+            if ((insn & 0x0E00) == 0x0000) /* ADD */{
+                val = cpu->R[a] + cpu->R[b];
+            }
+            if ((insn & 0x0E00) == 0x0200 || (insn & 0x0E00) == 0x0C00) /* SUB OR CMP*/{
+                val = cpu->R[a] - cpu->R[b];
+            }
+            if ((insn & 0x0E00) == 0x0400) /* AND */{
+                val = cpu->R[a] & cpu->R[b];
+            }
+            if ((insn & 0x0E00) == 0x0600) /* OR */{
+                val = cpu->R[a] | cpu->R[b];
+            }
+            if ((insn & 0x0E00) == 0x0800) /* XOR */{
+                val = cpu->R[a] ^ cpu->R[b];
+            }
+            if ((insn & 0x0E00) == 0x0A00) /* SHIFT right */{
+                val = cpu->R[a] >> cpu->R[b];
+            }
+            cpu->R[c] = val;
+            cpu->N = (val & 0x8000) != 0;
+            cpu->Z = (val == 0);
+        
+
+            if ((insn & 0x0E00) == 0x0C00) /* CMP */{
+                cpu->R[c] = 0; //discard the value and keep the flags
+            }
+            if ((insn & 0x0E00) == 0x0E00) /* TEST */{
+                cpu->N = (cpu->R[a] & 0x8000) != 0; //set flag according to Ra
+                cpu->Z = (cpu->R[a] == 0);
+            }
+            cpu->PC += 2;
+            return false;
+        }
+
+        case 0x6: case 0x7: { //JMP
+            uint16_t jmpCase = (insn >> 9) & 7;
+            bool makeJump = true;
+
+            printf("%i\n", jmpCase);
+            switch (jmpCase) {
+                case 0: {
+                    makeJump = true;
+                }
+                case 1: {
+                    makeJump = (cpu->Z == true);
+                }
+                case 2: {
+                    makeJump = (cpu->Z == false);
+                }
+                case 3: {
+                    makeJump = (cpu->N == true);
+                }           
+                case 4: {
+                    makeJump = (cpu->Z == false) & (cpu->N = false);
+                }    
+                case 5: {
+                    makeJump = (cpu->Z == true) | (cpu->N = true);
+                }
+                case 6: {
+                    makeJump = (cpu->N == false);
+                }
+                case 7: {
+                    //exit(0);
+                    printf("aborting");
+                }
+            }
+
+            if (makeJump){
+                if (insn >> 12 & 1){
+                    uint16_t regA = insn & 7;
+                    cpu->PC = cpu->R[regA];
+                } 
+                else{
+                    uint16_t newVal = load2(cpu, cpu->PC + 2);
+                    cpu->PC = newVal;
+                }
+            }
+
+            if (!makeJump){
+                if (insn >> 12 & 1){
+                    cpu->PC += 2;
+                } 
+                else{
+                    cpu->PC += 4;
+                }
+            }
+
+            return false;
+        }
+
+
 
         //CALL to address in 3rd and 4th bytes
 
@@ -142,8 +264,6 @@ bool emulate(struct cpu *cpu)
         //IN
 
         //OUT
-
-
         
         default:
             printf("Unknown opcode: 0x%x\n", opcode);
