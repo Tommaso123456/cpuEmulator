@@ -26,7 +26,7 @@ void testSET(struct cpu *cpu){
     int val = emulate(cpu);
     assert(val == 0);
 
-    printf("reg a: ");
+    printf("reg 1: ");
     printf("%u\n", cpu->R[1]);
     
     //assert(cpu->R[1] == 0x1234);
