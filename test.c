@@ -366,6 +366,15 @@ void testALU(struct cpu *cpu){
     assert(cpu->Z == true);
     assert(cpu->N == false);
 
+    //Test 
+    zerocpu(cpu);
+    cpu->R[0] = 0x1111;
+    store2(cpu, 0x5E00, 0);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->Z == false);
+    assert(cpu->N == false);
+
     printf("--PASSED ALU TEST-- \n");
 }
 
@@ -512,7 +521,6 @@ void testCALL(struct cpu *cpu){
     //call address 0x8000
     zerocpu(cpu);
     store2(cpu, 0x8000, 0);
-    store2(cpu, 0x0008, 2);
     store2(cpu, 0x1234, 2);
     cpu->SP = 2;
     int val = emulate(cpu);
@@ -522,12 +530,32 @@ void testCALL(struct cpu *cpu){
     //call register 0x9001
     zerocpu(cpu);
     store2(cpu, 0x9001, 0);
-    store2(cpu, 0x0008, 2);
     cpu->SP = 2;
     cpu->R[1] = 0x1234;
     val = emulate(cpu);
     assert(val == 0);
     assert(cpu->PC == 0x1234);
+
+    //CALL address 0x1234 and SP = 0xF000
+    zerocpu(cpu);
+    store2(cpu, 0x8000, 0);
+    store2(cpu, 0x1234, 2);
+    cpu->SP = 0xf000;
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(load2(cpu, cpu->SP == 0x004a));
+    assert(cpu->PC == 0x1234);
+
+    //CALL *R3 R3 = 0x3456, SP = 0xFOOO
+    zerocpu(cpu);
+    store2(cpu, 0x9003, 0);
+    cpu->SP = 0xF000;
+    cpu->R[3] = 0x3456;
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(load2(cpu, cpu->SP == 0x004c));
+    assert(cpu->PC == 0x3456);
+
 
     printf("--PASSED CALL TEST-- \n");
 }

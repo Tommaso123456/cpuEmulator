@@ -29,7 +29,6 @@ bool emulate(struct cpu *cpu)
     // Skip the first 12 bits to get to the last 4 (the opcode)
     uint16_t opcode = (insn >> 12);
     
-
     // Switch case to go through opcodes
     switch (opcode) {
 
@@ -156,6 +155,7 @@ bool emulate(struct cpu *cpu)
             int a = insn & 7;
             int b = (insn >> 3) & 7; 
             int c = (insn >> 6) & 7; 
+            uint16_t initialA = cpu->R[a];
             uint16_t val = 0;
 
 
@@ -186,8 +186,11 @@ bool emulate(struct cpu *cpu)
                 cpu->R[c] = 0; //discard the value and keep the flags
             }
             if ((insn & 0x0E00) == 0x0E00) /* TEST */{
+                cpu->R[a] = initialA;
                 cpu->N = (cpu->R[a] & 0x8000) != 0; //set flag according to Ra
                 cpu->Z = (cpu->R[a] == 0);
+                
+                
             }
             cpu->PC += 2;
             return false;
@@ -251,23 +254,19 @@ bool emulate(struct cpu *cpu)
 
         case 0x8: {         //CALL to address in 3rd and 4th bytes
             cpu->SP -= 2;  //Decrease stack pointer
-            uint16_t toStore = load2(cpu, cpu->PC + 4); //Store a 16 bit value from PC + 4
-            store2(cpu, toStore ,cpu->SP); //store value in the address in sp
+            store2(cpu, cpu->PC + 4 ,cpu->SP); //store value of (PC + 4) in the address in sp
             uint16_t newAddr = load2(cpu, cpu->PC + 2); //read values from 3rd and 4th byte
-            cpu ->PC = newAddr;
+            cpu->PC = newAddr;
 
             return false;
         }
 
         case 0x9: {        //CALL to address in register
             cpu->SP -= 2;
-            uint16_t toStore = load2(cpu, cpu->PC + 2);
-            store2(cpu, toStore, cpu->SP);
+            store2(cpu, cpu->PC + 2,cpu->SP); //store value of (PC + 2) in the address in sp
             int a = insn & 7;
-
-            uint16_t newAddr = cpu->R[a];
+            uint16_t newAddr = cpu->R[a]; //Set PC register equal to 16-bit value in R[A]
             cpu ->PC = newAddr;
-
             return false;
         }
 
