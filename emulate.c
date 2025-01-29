@@ -193,38 +193,38 @@ bool emulate(struct cpu *cpu)
             return false;
         }
 
+
+
         case 0x6: case 0x7: { //JMP
             uint16_t jmpCase = (insn >> 9) & 7;
             bool makeJump = true;
-
-            printf("%i\n", jmpCase);
-            switch (jmpCase) {
-                case 0: {
-                    makeJump = true;
-                }
-                case 1: {
-                    makeJump = (cpu->Z == true);
-                }
-                case 2: {
-                    makeJump = (cpu->Z == false);
-                }
-                case 3: {
-                    makeJump = (cpu->N == true);
-                }           
-                case 4: {
-                    makeJump = (cpu->Z == false) & (cpu->N = false);
-                }    
-                case 5: {
-                    makeJump = (cpu->Z == true) | (cpu->N = true);
-                }
-                case 6: {
-                    makeJump = (cpu->N == false);
-                }
-                case 7: {
-                    //exit(0);
-                    printf("aborting");
-                }
+        
+            if (jmpCase == 0){
+                makeJump = true;
             }
+            else if(jmpCase == 1){
+                makeJump = (cpu->Z == true);
+            }
+            else if(jmpCase == 2){
+                makeJump = (cpu->Z == false);
+            }
+            else if(jmpCase == 3){
+                makeJump = (cpu->N == true);
+            }
+            else if(jmpCase == 4){
+                makeJump = (cpu->Z == false) & (cpu->N == false);
+            }
+            else if(jmpCase == 5){
+                makeJump = (cpu->Z == true) | (cpu->N == true);
+            }
+            else if(jmpCase == 6){
+                makeJump = (cpu->N == false);
+            }
+            else {
+                    exit(0);
+                    printf("aborting");
+            }
+
 
             if (makeJump){
                 if (insn >> 12 & 1){
@@ -249,21 +249,71 @@ bool emulate(struct cpu *cpu)
             return false;
         }
 
+        case 0x8: {         //CALL to address in 3rd and 4th bytes
+            cpu->SP -= 2;  //Decrease stack pointer
+            uint16_t toStore = load2(cpu, cpu->PC + 4); //Store a 16 bit value from PC + 4
+            store2(cpu, toStore ,cpu->SP); //store value in the address in sp
+            uint16_t newAddr = load2(cpu, cpu->PC + 2); //read values from 3rd and 4th byte
+            cpu ->PC = newAddr;
 
+            return false;
+        }
 
-        //CALL to address in 3rd and 4th bytes
+        case 0x9: {        //CALL to address in register
+            cpu->SP -= 2;
+            uint16_t toStore = load2(cpu, cpu->PC + 2);
+            store2(cpu, toStore, cpu->SP);
+            int a = insn & 7;
 
-        //CALL to address in register
+            uint16_t newAddr = cpu->R[a];
+            cpu ->PC = newAddr;
 
-        //RET
+            return false;
+        }
 
-        //PUSH
+        case 0xA: { //RET
+            cpu->PC = load2(cpu, cpu->SP);
+            cpu->SP += 2;
 
-        //POP
+            return false;
+        }
 
-        //IN
+        case 0xB: {  //PUSH
+            cpu->SP -= 2;
+            int a = insn & 7;
+            uint16_t data = cpu->R[a];
+            uint16_t addr =cpu->SP;
+            store2(cpu, data, addr);
+            cpu->PC += 2;
+            return false;
+        }
 
-        //OUT
+        case 0xC: { //POP
+            uint16_t data = load2(cpu, cpu->SP);
+            int a = insn & 7;
+            cpu->R[a] = data;
+            cpu->SP += 2;
+            cpu->PC += 2;
+
+            return false;
+        }
+
+        case 0xD: {  //in
+            int a = insn & 7;
+            cpu->R[a] = fgetc(stdin);
+            cpu->PC += 2;
+
+            return false;
+        }
+        
+
+        case 0xE: {  //out
+            int a = insn & 7;
+            fputc(cpu->R[a], stdout);
+            cpu->PC += 2;
+            return false;
+
+        }
         
         default:
             printf("Unknown opcode: 0x%x\n", opcode);

@@ -379,12 +379,206 @@ void testJUMP(struct cpu *cpu){
     assert(val == 0);
     assert(cpu->PC == 0x0008);
 
+    //Jump to register address
+    zerocpu(cpu);
+    cpu->R[3] = 0x1234;
+    store2(cpu, 0x7003, 0);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x1234);
+
+    //Jmp_Z  Z true - should Jump
+    zerocpu(cpu);
+    cpu->Z = true;
+    store2(cpu, 0x6200, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x0008);
+
+    //Jmp_Z  Z False - should NOT Jump
+    zerocpu(cpu);
+    cpu->Z = false;
+    store2(cpu, 0x6200, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 4);
+
+
+    //Jmp_NZ Z true - should NOT Jump
+    zerocpu(cpu);
+    cpu->Z = true;
+    store2(cpu, 0x6400, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 4);
+
+    //Jmp_NZ Z false - should Jump
+    zerocpu(cpu);
+    cpu->Z = false;
+    store2(cpu, 0x6400, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x0008);
+
+
+    //JMP LT N true - should Jump
+    zerocpu(cpu);
+    cpu->N = true;
+    store2(cpu, 0x6600, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x0008);
+
+    //JMP LT N false - should not Jump
+    zerocpu(cpu);
+    cpu->N = false;
+    store2(cpu, 0x6600, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 4);
+
+    //JMP GT N false and Z false - should Jump 
+
+    zerocpu(cpu);
+    cpu->N = false;
+    cpu->Z = false;
+    store2(cpu, 0x6800, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x0008);
+
+    //JMP GT N true and Z false - should not Jump
+    zerocpu(cpu);
+    cpu->N = true;
+    cpu->Z = false;
+    store2(cpu, 0x6800, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 4);
+
+    //JMP LE N true and Z false - should Jump
+    zerocpu(cpu);
+    cpu->N = true;
+    cpu->Z = false;
+    store2(cpu, 0x6A00, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x0008);
+
+    //JMP LE N false and Z false - should not Jump
+    zerocpu(cpu);
+    cpu->N = false;
+    cpu->Z = false;
+    store2(cpu, 0x6A00, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 4);
+
+    //JMP GE N false - should Jump
+    zerocpu(cpu);
+    cpu->N = false;
+    store2(cpu, 0x6C00, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x0008);
+
+    //JMP GE N true - should not Jump
+    zerocpu(cpu);
+    cpu->N = true;
+    store2(cpu, 0x6C00, 0);
+    store2(cpu, 0x0008, 2);
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 4);
+
 
     printf("--PASSED JMP TEST-- \n");
+
+}
+
+void testCALL(struct cpu *cpu){
+
+    //call address 0x8000
+    zerocpu(cpu);
+    store2(cpu, 0x8000, 0);
+    store2(cpu, 0x0008, 2);
+    store2(cpu, 0x1234, 2);
+    cpu->SP = 2;
+    int val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x1234);
+
+    //call register 0x9001
+    zerocpu(cpu);
+    store2(cpu, 0x9001, 0);
+    store2(cpu, 0x0008, 2);
+    cpu->SP = 2;
+    cpu->R[1] = 0x1234;
+    val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x1234);
+
+    printf("--PASSED CALL TEST-- \n");
+}
+
+void testRET(struct cpu *cpu){
+    zerocpu(cpu);
+
+    store2(cpu, 0xA000, 0);
+    cpu->SP = 0x1234;
+    store2(cpu, 0x0008, 0x1234);
+
+    int val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->PC == 0x0008);
+    assert(cpu->SP == 0x1236);
+
+    printf("--PASSED RET TEST-- \n");
+}
+
+void testPUSH(struct cpu *cpu){
+    zerocpu(cpu);
+    store2(cpu, 0xB001, 0);
+    cpu->SP = 0x1002;
+    cpu->R[1] = 0x1738;
+
+    int val = emulate(cpu);
+    assert(val == 0);
+    assert(load2(cpu, 0x1000) == 0x1738);
+    assert(cpu->SP == 0x1000);
+
+    printf("--PASSED PUSH TEST-- \n");
+
 }
 
 
+void testPOP(struct cpu *cpu){
+    zerocpu(cpu);
 
+    store2(cpu, 0xC001, 0);
+    store2(cpu, 0xAAAA, 0x1234);
+    cpu->SP = 0x1234;
+
+    int val = emulate(cpu);
+    assert(val == 0);
+    assert(cpu->R[1] == 0xAAAA);
+    assert(cpu->PC == 2);
+    assert(cpu->SP == 0x1236);
+
+    printf("--PASSED POP TEST-- \n");
+
+}
 
 
 void test1(struct cpu *cpu)
@@ -426,6 +620,10 @@ int main(int argc, char **argv)
     testMOVE(&cpu);
     testALU(&cpu);
     testJUMP(&cpu);
+    testCALL(&cpu);
+    testRET(&cpu);
+    testPUSH(&cpu);
+    testPOP(&cpu);
 
     test1(&cpu);
     //test2(&cpu);
